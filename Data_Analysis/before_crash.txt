@@ -1,0 +1,20 @@
+data.na$SalaryG <- 1
+data.na$SalaryG[(data.na$Salary>=2000000) & (data.na$Salary <= 5000000)] <- 2
+data.na$SalaryG[(data.na$Salary>5000000) & (data.na$Salary <= 8000000)] <- 3
+data.na$SalaryG[(data.na$Salary>8000000)] <- 4
+
+multiFull <- merge(merge(merge(
+  data.clust, km_clust),
+  mc_class),
+  data.na[27])
+
+# # trying make the merging easier, couldn't figure it out
+# multi_inner <- Reduce(
+#   function(a, b, c) merge(a, b, c, all = T),
+#   list(data.clust, km_clust, mc_class, data.na[27])
+# )
+
+
+merge(data.clust, km_clust, mc_class, data.na[27], by = 0)
+
+```

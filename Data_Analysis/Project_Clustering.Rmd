@@ -1,0 +1,239 @@
+---
+title: "Project_Clustering"
+author: "David Wiley"
+date: "November 22, 2020"
+output: word_document
+---
+
+```{r}
+# import library to read the excel file
+#ibrary(readxl)
+
+# reading in the data
+#data <- read_excel("../nbastats2018-2019.xlsx")
+data <- read.csv("../nbastats2018-2019.csv", header = T, row.names = 1)
+
+# removing players without a salary 
+# base on their team is NA
+data.na <- na.omit(data)
+data.na <- subset(data.na, data.na$Salary != "-")
+
+# pulling player information
+# as it doesn't apply to performance
+#pnames <- data.na$Name
+pinfo <- data.na[,c(1:4)]
+
+# Since Salary has "-" for players without teams
+# we have to convert Salary back into numerical values
+salaries <- as.numeric(data.na$Salary)
+data.c <- data.na[,-c(1:5)]
+```
+
+
+```{r dpi=5000}
+library(MVA)
+
+data.center <- colMeans(data.c)
+data.cov <- cov(data.c)
+
+# finding mahalanobis distances
+m_dist <- mahalanobis(data.c, data.center, data.cov)
+
+# creating a new data frame to include the mahalanobis distances
+data.m <- data.c
+data.m$M_Dist <- round(m_dist, 1)
+
+# looking to see if there are any outliers
+head(rev(data.m[order(data.m$M_Dist, decreasing = T),])[1])
+head(rev(data.m[order(data.m$M_Dist, decreasing = F),])[1])
+
+# removing Terrence Jones outlier
+data.mc <- subset(data.m, rownames(data.m) != "Terrence Jones")
+data.c <- subset(data.c, rownames(data.c) != "Terrence Jones")
+
+#jpeg("./all_data_plot.jpeg")
+#plot(data.c)
+```
+
+```{r}
+# scaling the data
+data.sc <- scale(data.c)
+
+# calculating the distance matrix
+data.d <- dist(data.sc)
+
+```
+
+
+```{r}
+# creating a hierarchical clustering
+hc <- hclust(data.d, "complete")
+
+# plotting the hc 
+plot(hc, labels = rownames(data.d), cex=0.5)
+```
+
+```{r}
+plot(rev(hc$height), xlim = c(0,50))
+```
+
+
+```{r}
+ct4 <- cutree(hc, 4)
+
+table(ct4)
+data.clust <- data.frame(ct4)
+subset(data.clust, data.clust$ct4 == 4)
+subset(data.clust, data.clust$ct4 == 3)
+subset(data.clust, data.clust$ct4 == 2)
+subset(data.clust, data.clust$ct4 == 1)
+
+```
+
+```{r}
+plot.wgss = function(mydata, maxc) {
+  wss = numeric(maxc)
+  for (i in 1:maxc)
+    wss[i] = kmeans(mydata, centers=i, nstart=10)$tot.withinss
+  plot(1:maxc, wss, type="b", xlab="Number of Clusters",
+  ylab="Within groups sum of squares", main="Scree Plot")
+}
+
+plot.wgss(data.sc, 20)
+
+
+km <- kmeans(data.sc, centers=4)
+
+#table(km$cluster)
+
+# group 1
+gp1 <- data.frame(subset(km$cluster, km$cluster==1))
+colnames(gp1) <- c("Group")
+gp1
+
+# group 2
+gp2 <- data.frame(subset(km$cluster, km$cluster==2))
+colnames(gp2) <- c("Group")
+gp2
+
+# group 3
+gp3 <- data.frame(subset(km$cluster, km$cluster==3))
+colnames(gp3) <- c("Group")
+gp3
+
+# group 4
+# gp4 <- data.frame(subset(km$cluster, km$cluster==4))
+# colnames(gp4) <- c("Group")
+# gp4
+
+table(km$cluster)
+rowMeans(km$centers)
+
+```
+
+```{r dpi=1000}
+
+pca <- princomp(data.c, cor=T)
+
+pca$loadings[,1:3]
+subset(pca$loadings, pca$loadings[,1] == max(pca$loadings[,1]))
+pca$loadings[,1][round(unname(pca$loadings[,1]), 8) == round(max(pca$loadings[,1]), 8)]
+pca$loadings[,2][round(unname(pca$loadings[,2]), 8) == round(max(pca$loadings[,2]), 8)]
+pca$loadings[,3][round(unname(pca$loadings[,3]), 8) == round(max(pca$loadings[,3]), 8)]
+
+plot(pca$scores[,1:2], col=km$cluster, 
+     xlab = "PC1: \"Win Shares\"",
+     ylab = "PC2: \"3-Point Field Goal Attempts\"",
+     main = "PC1 vs. PC2")
+
+plot(pca$scores[,c(1,3)], col=km$cluster, 
+     xlab = "PC1: \"Win Shares\"",
+     ylab = "PC3: \"Usage %\"",
+     main = "PC1 vs. PC3")
+
+plot(pca$scores[,2:3], col=km$cluster, 
+     xlab = "PC2: \"3-Point Field Goal Attempts\"",
+     ylab = "PC3: \"Usage %\"",
+     main = "PC2 vs. PC3")
+
+```
+
+
+```{r dpi=1000}
+
+library(mclust)
+
+mc <- Mclust(data.c)
+
+jpeg("./mclust.jpeg")
+plot(mc, what = "classification")
+
+# number of groups
+mc$G
+
+# player group classification
+data.frame(mc$classification)
+
+table(mc$classification)
+
+```
+
+```{r}
+mc <- Mclust(data.c, G = 4)
+
+jpeg("./mclust.jpeg")
+plot(mc, what = "classification")
+
+# number of groups
+mc$G
+
+# player group classification
+data.frame(mc$classification)
+
+table(mc$classification)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
