@@ -11,7 +11,7 @@ output: word_document
 
 # reading in the data
 #data <- read_excel("../nbastats2018-2019.xlsx")
-data <- read.csv("../nbastats2018-2019.csv", header = T, row.names = 1)
+data <- read.csv("./nbastats2018-2019.csv", header = T, row.names = 1)
 
 # removing players without a salary 
 # base on their team is NA
@@ -67,26 +67,66 @@ data.d <- dist(data.sc)
 
 ```{r}
 # creating a hierarchical clustering
-hc <- hclust(data.d, "complete")
+hc1 <- hclust(data.d, "complete")
 
 # plotting the hc 
-plot(hc, labels = rownames(data.d), cex=0.5)
+plot(hc1, labels = rownames(data.d), cex=0.5)
+
+# creating a hierarchical clustering
+hc2 <- hclust(data.d, "single")
+
+# plotting the hc 
+plot(hc2, labels = rownames(data.d), cex=0.5)
+
+# creating a hierarchical clustering
+hc3 <- hclust(data.d, "average")
+
+# plotting the hc 
+plot(hc3, labels = rownames(data.d), cex=0.5)
 ```
 
 ```{r}
-plot(rev(hc$height), xlim = c(0,50))
+plot(rev(hc1$height), xlim = c(0,50))
+
+plot(rev(hc2$height), xlim = c(0,50))
+
+plot(rev(hc3$height), xlim = c(0,50))
+
 ```
 
 
 ```{r}
-ct4 <- cutree(hc, 4)
+ct31 <- cutree(hc1, 3)
 
-table(ct4)
-data.clust <- data.frame(ct4)
-subset(data.clust, data.clust$ct4 == 4)
-subset(data.clust, data.clust$ct4 == 3)
-subset(data.clust, data.clust$ct4 == 2)
-subset(data.clust, data.clust$ct4 == 1)
+table(ct31)
+data.clust <- data.frame(ct31)
+subset(data.clust, data.clust$ct31 == 3)
+subset(data.clust, data.clust$ct31 == 2)
+subset(data.clust, data.clust$ct31 == 1)
+
+ct32 <- cutree(hc2, 3)
+
+table(ct32)
+data.clust <- data.frame(ct32)
+subset(data.clust, data.clust$ct32 == 3)
+subset(data.clust, data.clust$ct32 == 2)
+subset(data.clust, data.clust$ct32 == 1)
+
+ct33 <- cutree(hc3, 3)
+
+table(ct33)
+data.clust <- data.frame(ct33)
+subset(data.clust, data.clust$ct33 == 3)
+subset(data.clust, data.clust$ct33 == 2)
+subset(data.clust, data.clust$ct33 == 1)
+# ct4 <- cutree(hc, 4)
+# 
+# table(ct4)
+# data.clust <- data.frame(ct4)
+# subset(data.clust, data.clust$ct4 == 4)
+# subset(data.clust, data.clust$ct4 == 3)
+# subset(data.clust, data.clust$ct4 == 2)
+# subset(data.clust, data.clust$ct4 == 1)
 
 ```
 
@@ -101,8 +141,7 @@ plot.wgss = function(mydata, maxc) {
 
 plot.wgss(data.sc, 20)
 
-
-km <- kmeans(data.sc, centers=4)
+km <- kmeans(data.sc, centers=3)
 
 #table(km$cluster)
 
@@ -121,7 +160,29 @@ gp3 <- data.frame(subset(km$cluster, km$cluster==3))
 colnames(gp3) <- c("Group")
 gp3
 
-# group 4
+
+# ### four groups
+# 
+# km <- kmeans(data.sc, centers=4)
+# 
+# #table(km$cluster)
+# 
+# # group 1
+# gp1 <- data.frame(subset(km$cluster, km$cluster==1))
+# colnames(gp1) <- c("Group")
+# gp1
+# 
+# # group 2
+# gp2 <- data.frame(subset(km$cluster, km$cluster==2))
+# colnames(gp2) <- c("Group")
+# gp2
+# 
+# # group 3
+# gp3 <- data.frame(subset(km$cluster, km$cluster==3))
+# colnames(gp3) <- c("Group")
+# gp3
+# 
+# # group 4
 # gp4 <- data.frame(subset(km$cluster, km$cluster==4))
 # colnames(gp4) <- c("Group")
 # gp4
@@ -141,25 +202,31 @@ pca$loadings[,1][round(unname(pca$loadings[,1]), 8) == round(max(pca$loadings[,1
 pca$loadings[,2][round(unname(pca$loadings[,2]), 8) == round(max(pca$loadings[,2]), 8)]
 pca$loadings[,3][round(unname(pca$loadings[,3]), 8) == round(max(pca$loadings[,3]), 8)]
 
+jpeg("./PC1_PC2.jpeg", quality = 100)
 plot(pca$scores[,1:2], col=km$cluster, 
      xlab = "PC1: \"Win Shares\"",
      ylab = "PC2: \"3-Point Field Goal Attempts\"",
      main = "PC1 vs. PC2")
+dev.off()
 
+jpeg("./PC1_PC3.jpeg", quality = 100)
 plot(pca$scores[,c(1,3)], col=km$cluster, 
      xlab = "PC1: \"Win Shares\"",
      ylab = "PC3: \"Usage %\"",
      main = "PC1 vs. PC3")
+dev.off()
 
+jpeg("./PC2_PC3.jpeg", quality = 100)
 plot(pca$scores[,2:3], col=km$cluster, 
      xlab = "PC2: \"3-Point Field Goal Attempts\"",
      ylab = "PC3: \"Usage %\"",
      main = "PC2 vs. PC3")
+dev.off()
 
 ```
 
 
-```{r dpi=1000}
+```{r dpi=3000}
 
 library(mclust)
 
@@ -178,11 +245,21 @@ table(mc$classification)
 
 ```
 
-```{r}
-mc <- Mclust(data.c, G = 4)
+```{r dpi=3000}
+mc <- Mclust(data.c, G = 3)
 
-jpeg("./mclust.jpeg")
+jpeg("./mclust.jpeg", quality = 100, width = 1000, height = 1000)
 plot(mc, what = "classification")
+dev.off()
+
+jpeg("./mclust_uncertainty.jpeg", quality = 100, width = 1000, height = 1000)
+plot(mc, what = "uncertainty")
+dev.off()
+
+jpeg("./mclust_Fin_SPS.jpeg", quality = 100, width = 1000, height = 1000)
+plot(mc, what = "uncertainty", dimens = c(6,8))
+text(mc$data[,c(6,8)], labels = rownames(mc$data), col = mc$classification)
+dev.off()
 
 # number of groups
 mc$G
