@@ -1,0 +1,89 @@
+---
+title: "CFA Project"
+author: "Scott McCauley"
+date: "11/28/2020"
+output: word_document
+---
+
+```{r}
+#Reading the csv file of the dataset
+nba <- read.csv("/Users/scottmccauley/Desktop/MVA/nbastats.csv")
+nba
+# Getting rid of NA values for salary as well as getting rid of players with no team
+nba$Salary[nba$Salary=='-'] = 0
+nba$Salary = as.numeric(nba$Salary)
+nba <- na.omit(nba)
+
+nba_information <- nba[,c(1,4,6,7)]
+nba = nba[,c(2,3,8,9,10,15)]
+
+# Scaling the data frame information so that we can produce loadings
+nba_data <- data.frame(nba)
+nba_scaled <- scale(nba_data)
+
+# creating EFA model
+
+efa <- factanal(nba_scaled, factors = 2)
+print(efa$loadings, cut = 0.5)
+```
+
+
+```{r}
+#Creating the CFA Model
+
+library(sem)
+nba_model <- specifyModel(text = '
+Rebounder -> Height, lambda1, NA
+Rebounder -> Weight, lambda2, NA
+Rebounder -> Blocks, lambda3, NA
+Allrounder -> Steals, lambda5, NA
+Allrounder -> Assists, lambda6, NA
+Allrounder -> FG3A, lamba7, NA
+Rebounder <-> Allrounder, rho, NA
+Height<-> Height, theta1, NA
+Weight <-> Weight, theta2, NA
+Blocks <-> Blocks, theta4, NA
+Steals <-> Steals, theta5, NA
+Assists <-> Assists, theta6, NA
+FG3A <-> FG3A, theta7, NA
+Allrounder <-> Allrounder, NA, 1
+Rebounder <-> Rebounder, NA,1')
+
+nba_sem <- sem(nba_model, cor(nba), nrow(nba))
+
+summary(nba_sem)
+```
+
+```{r}
+# Creating a SemPath
+
+library(semPlot)
+
+semPaths(nba_sem, rotation = 2, col = 2, "est")
+```
+
+```{r}
+options(fit.indices = c("GFI", "AGFI", "SRMR"))
+
+nba_criteria = summary(nba_sem)
+
+nba_criteria$GFI
+nba_criteria$AGFI
+nba_criteria$SRMR
+
+nba_criteria$SRMR < 0.05
+nba_criteria$GFI > 0.95
+nba_criteria$AGFI > 0.95
+```
+
+```{r}
+parameters = summary(nba_sem)
+parameters$coeff
+
+parameters$coeff[8,]$Estimate
+conf.L = parameters$coeff[8,]$Estimate - 1.96 * parameters$coeff[8,]$`Std Error`
+conf.U = parameters$coeff[8,]$Estimate + 1.96 * parameters$coeff[8,]$`Std Error`
+conf.L
+conf.U
+```
+
